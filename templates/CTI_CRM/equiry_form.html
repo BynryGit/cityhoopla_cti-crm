@@ -451,9 +451,9 @@ div.dataTables_filter label {
         	<div class="row">
         		<div class="col-lg-12">
 					<label class="control-label">Preference for response</label><br>
-	  				<input class="checkbox1" type="checkbox" name="sms" value="sms" onclick="handleClick(this);"> SMS 
-				  	<input class="checkbox2" type="checkbox" name="email" value="email" onclick="handleClick(this);"> Email 
-				  	<input class="checkbox3" type="checkbox" name="callback" value="callback" onclick="handleClick(this);"> Call Back 
+	  				<input class="checkbox1" type="checkbox" id="sms" name="sms" value="sms" onclick="handleClick(this);"> SMS 
+				  	<input class="checkbox2" type="checkbox" id="email" name="email" value="email" onclick="handleClick(this);"> Email 
+				  	<input class="checkbox3" type="checkbox" id="callback" name="callback" value="callback" onclick="handleClick(this);"> Call Back 
 			  	
 	        	 	<!-- <div class="col-lg-12">
 	        	 	<label class="control-label">Preference for response</label><br>
@@ -678,17 +678,48 @@ function handleClick(cb) {
 }
 
 function send_msg() {
-	alert('in send'+$("#alist").val());
+		var checkedValue1 = $('.checkbox1:checked').val();
+		var checkedValue2 = $('.checkbox2:checked').val();
+		var checkedValue3 = $('.checkbox3:checked').val();
+
+	sms = $("#sms").val();
+	email = $("#email").val()
+	callback = $("#callback").val()
 	
-	$('#error-message1').html('');
-	$('#error-message1').append('Data sent to Caller');
-	$("#error-modal1").modal('show');
+	searchfor = $("#search1" ).val();
+	area = $("#area" ).val();
+	cid = $("#cid" ).val();
+	$.ajax({
+             type: 'POST',
+             url: '/CTI-CRM/send_subscriber_details/',
+             data: {'subscriber_id': $("#alist").val(),'searchfor':searchfor,'area':area,'cid':cid,'sms':checkedValue1,'email':checkedValue2},
+              success: function (response) {
+                alert('success');
+             },
+             error: function (response) {
+                 alert("Error!");
+             },
+
+         });
 } 
 
 function send_advert() {
-	$('#error-message1').html('');
-	$('#error-message1').append('Data sent to Supplier');
-	$("#error-modal1").modal('show');
+	alert('in send business');
+	searchfor = $("#search1" ).val();
+	area = $("#area" ).val();
+	cid = $("#cid" ).val();
+	$.ajax({
+             type: 'POST',
+             url: '/CTI-CRM/send_consumer_details/',
+             data: {'subscriber_id': $("#alist").val(),'searchfor':searchfor,'area':area,'cid':cid},
+             success: function (response) {
+                alert('success');
+             },
+             error: function (response) {
+                 alert("Error!");
+             },
+
+         });
 }
 
 $("#city").change(function () {
@@ -734,9 +765,6 @@ function getDetails(){
 			'<td style="text-align:center;">'+"N/A"+'</td>'+
 			'<td style="text-align:center;">'+"N/A"+'</td>'+ 																							'<td style="text-align:center;">'+"N/A"+'</td>'																						);
 		return false;	
-	}
-	if (area=='') {
-		return false;
 	}
 	/*if (area.length<3) {
 		$('.error1').text("Please enter atleast 3 characters");

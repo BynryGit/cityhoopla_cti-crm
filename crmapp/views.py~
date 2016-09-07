@@ -37,7 +37,7 @@ from django.views.decorators.cache import cache_control
 # HTTP Response
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-
+from DigiSpace.tasks import add_to_count
 SERVER_URL = "http://52.40.205.128"   
 #SERVER_URL = "http://127.0.0.1:8000"
 
@@ -48,6 +48,8 @@ def crm_login_form(request):
     return render(request,'CTI_CRM/operator_login.html', dict(form=form))
 
 def crm_home(request):
+    
+    add_to_count.delay()
     return render(request,'CTI_CRM/crm_home.html')
 
 @csrf_exempt

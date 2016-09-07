@@ -37,8 +37,12 @@ from django.views.decorators.cache import cache_control
 # HTTP Response
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
+from DigiSpace.tasks import send_to_subscriber
+from DigiSpace.tasks import send_sms_to_consumer
+from DigiSpace.tasks import send_email_to_consumer
 
-SERVER_URL = "http://52.40.205.128"   
+#from DigiSpace.tasks import print_some_times
+SERVER_URL = "http://52.40.205.128"
 #SERVER_URL = "http://127.0.0.1:8000"
 
 #CTI CRM APIs=============================================================================
@@ -48,6 +52,8 @@ def crm_login_form(request):
     return render(request,'CTI_CRM/operator_login.html', dict(form=form))
 
 def crm_home(request):
+    
+    #print_some_times.delay()
     return render(request,'CTI_CRM/crm_home.html')
 
 @csrf_exempt
@@ -280,6 +286,97 @@ def enquiry_search_results(request):
 #     return render_to_response('Admin/user_login.html', dict(
 #         form=form, message_logout='You have successfully logged out.'
 #     ), context_instance=RequestContext(request))
+
+
+@csrf_exempt
+def send_subscriber_details(request):
+    i=0
+    slist=[]
+    list1=[]
+    list=[]
+    print '------------send data----------',request.POST.get('subscriber_id')
+    print '------------sms data----------',request.POST.get('sms')
+    print '------------email data----------',request.POST.get('email')
+    try:
+        list = request.POST.get('subscriber_id')
+        searchfor = request.POST.get('searchfor')
+        area = request.POST.get('area')
+        cid = request.POST.get('cid')
+        cobj = CallerDetails.objects.get(CallerID=cid)
+        c_number = cobj.IncomingTelNo
+        c_name = cobj.first_name
+        c_email = cobj.email
+        ele = list.split(',')
+        for i in range(len(ele)):
+            print ele[i]
+            supplier_obj = Supplier.objects.get(supplier_id=ele[i])
+            supplier_id = str(supplier_obj.supplier_id)
+            business_name = supplier_obj.business_name
+            email = supplier_obj.supplier_email
+            phone = supplier_obj.phone_no
+            address = supplier_obj.address1+ ' ' +supplier_obj.address2 +','+supplier_obj.city.city_name+'-'+supplier_obj.pincode.pincode
+            t = datetime.now()
+            list1={'supplier_id':supplier_id,'bname':business_name,'email':email,'phone':phone,'address':str(address),'time':t,
+                   'searchfor':searchfor,'area':area,'cid':cid,'c_number':c_number,'c_name':c_name,'c_email':c_email}
+            slist.append(list1)
+            data = {'success':'true'}
+        #send_to_subscriber.delay(slist)
+        if request.POST.get('sms'):
+            print '--------in the sms=-------'
+            send_sms_to_consumer.delay(slist)
+        if request.POST.get('email'):
+            print '--------in email------'
+            send_email_to_consumer.delay(slist)
+        if request.POST.get('sms') & request.POST.get('email'):
+            send_sms_to_consumer.delay(slist)
+            send_email_to_consumer.delay(slist)
+        #send_to_consumer.delay(slist)
+
+    except Exception as e:
+        print e
+        data = {'success':'false'}
+
+    print '----------data------',data
+    return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+@csrf_exempt
+def send_consumer_details(request):
+    print '------------in consumer details----------',request.POST.get('subscriber_id')
+    i=0
+    slist=[]
+    list1=[]
+    list=[]
+    try:
+        list = request.POST.get('subscriber_id')
+        searchfor = request.POST.get('searchfor')
+        area = request.POST.get('area')
+        cid = request.POST.get('cid')
+        cobj = CallerDetails.objects.get(CallerID=cid)
+        c_number = cobj.IncomingTelNo
+        c_name = cobj.first_name
+        c_email = cobj.email
+        ele = list.split(',')
+        for i in range(len(ele)):
+            supplier_obj = Supplier.objects.get(supplier_id=ele[i])
+            supplier_id = str(supplier_obj.supplier_id)
+            business_name = supplier_obj.business_name
+            email = supplier_obj.supplier_email
+            phone = supplier_obj.phone_no
+            address = supplier_obj.address1+ ' ' +supplier_obj.address2 +','+supplier_obj.city.city_name+'-'+supplier_obj.pincode.pincode
+            t = datetime.now()
+            list1={'supplier_id':supplier_id,'bname':business_name,'email':email,'phone':phone,'address':str(address),'time':t,
+                   'searchfor':searchfor,'area':area,'cid':cid,'c_number':c_number,'c_name':c_name,'c_email':c_email}
+            slist.append(list1)
+            data = {'success':'true'}
+        #send_to_subscriber.delay(slist)
+        send_to_subscriber.delay(slist)
+
+    except Exception as e:
+        print e
+        data = {'success':'false'}
+
+    return HttpResponse(json.dumps(data), content_type='application/json')
 
 
 @csrf_exempt
