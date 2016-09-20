@@ -176,6 +176,7 @@ def crm_details(request):
     phone_number = user_obj.IncomingTelNo
     first_name = user_obj.first_name
     last_name = user_obj.last_name
+    email = user_obj.email
     CallerArea = user_obj.CallerArea
     CallerCity = user_obj.CallerCity
     CallerPincode = user_obj.CallerPincode
@@ -193,7 +194,7 @@ def crm_details(request):
         data_list={'sr_no':sr_no,'enquiry':enquiry,'address':address,'e_date':e_date}
         detail_list.append(data_list)
 
-    data = {'detail_list':detail_list,'caller_id':caller_id,'phone_number':phone_number,'first_name':first_name,'last_name':last_name,'area':CallerArea,'city':CallerCity,'pincode':CallerPincode,
+    data = {'detail_list':detail_list,'caller_id':caller_id,'phone_number':phone_number,'email':email,'first_name':first_name,'last_name':last_name,'area':CallerArea,'city':CallerCity,'pincode':CallerPincode,
             'enquiry':enquiry,'address':address,'e_date':e_date}
     return render(request,'CTI_CRM/crm_details.html',data)
 
@@ -327,7 +328,7 @@ def send_subscriber_details(request):
         if request.POST.get('email'):
             print '--------in email------'
             send_email_to_consumer.delay(slist)
-        if request.POST.get('sms') & request.POST.get('email'):
+        if request.POST.get('sms') and request.POST.get('email'):
             send_sms_to_consumer.delay(slist)
             send_email_to_consumer.delay(slist)
         #send_to_consumer.delay(slist)
